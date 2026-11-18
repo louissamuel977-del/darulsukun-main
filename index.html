@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dar-ul-Sukun – Main System</title><link rel="icon" href="logo.jpg">
+<style>
+:root{--g:#0f6b4f;--g2:#0a4a37;--bg:#f3f6f5;--t:#1c2b26;--m:#6b7c76;--c:#fff;--b:#dde5e2}
+@media(prefers-color-scheme:dark){:root{--bg:#121a17;--t:#e6efeb;--m:#93a39d;--c:#1b2622;--b:#2c3a35}}
+*{box-sizing:border-box}html,body{height:100%;margin:0}
+body{font:15px system-ui,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--t)}
+[hidden]{display:none!important}
+#login{display:grid;place-items:center;height:100%;padding:16px}
+.box{background:var(--c);border:1px solid var(--b);border-radius:14px;padding:28px;width:min(380px,100%);text-align:center}
+.box img{width:84px;height:84px;object-fit:contain}
+input{width:100%;padding:11px;margin:6px 0;border:1px solid var(--b);border-radius:8px;background:var(--bg);color:var(--t);font:inherit}
+button{cursor:pointer;font:inherit}
+.pb{width:100%;padding:11px;margin-top:8px;border:0;border-radius:8px;background:var(--g);color:#fff;font-weight:600}
+#msg{color:#c0392b;min-height:20px;font-size:13px}
+#app{display:flex;height:100%}
+aside{width:230px;background:var(--g2);color:#fff;display:flex;flex-direction:column;padding:12px;gap:4px}
+aside .h{display:flex;gap:10px;align-items:center;padding:6px 6px 14px;font-weight:700;line-height:1.2}
+aside .h img{width:40px;height:40px;background:#fff;border-radius:8px;object-fit:contain}
+.nav{padding:10px 12px;border-radius:8px;background:none;border:0;color:#d5e6df;text-align:left;width:100%}
+.nav:hover,.nav.on{background:rgba(255,255,255,.14);color:#fff}
+.nav.off{opacity:.5}
+.sp{flex:1}.who{font-size:12px;color:#b5cfc5;padding:6px}
+main{flex:1;display:flex;flex-direction:column;min-width:0}
+#home{padding:24px;overflow:auto}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;margin-top:14px}
+.card{background:var(--c);border:1px solid var(--b);border-radius:12px;padding:18px;text-align:left;color:var(--t)}
+.card:hover{border-color:var(--g)}.card b{display:block;font-size:16px;margin:6px 0 4px}.card span{color:var(--m);font-size:13px}
+.ic{font-size:28px}.tag{font-size:11px;background:var(--b);padding:2px 8px;border-radius:10px;margin-left:6px}
+iframe{flex:1;border:0;width:100%;background:var(--c)}
+@media(max-width:720px){#app{flex-direction:column}aside{width:100%;flex-direction:row;overflow:auto;align-items:center}aside .h span,.who,.sp{display:none}.nav{white-space:nowrap;width:auto}}
+</style></head><body>
+<div id="login"><form class="box" id="lf">
+<img src="logo.jpg" alt=""><h2 style="margin:8px 0 2px">Dar-ul-Sukun</h2><div style="color:var(--m);margin-bottom:12px">Main System – ek login, sab modules</div>
+<input id="u" placeholder="Username" autocomplete="username" required>
+<input id="p" type="password" placeholder="Password" autocomplete="current-password" required>
+<div id="msg"></div><button class="pb" id="lb">Sign in</button></form></div>
+
+<div id="app" hidden>
+<aside><div class="h"><img src="logo.jpg" alt=""><span>Dar-ul-Sukun<br><small>Main System</small></span></div>
+<div id="nav"></div><div class="sp"></div><div class="who" id="who"></div>
+<button class="nav" id="out">Sign out</button></aside>
+<main><div id="home"><h2 style="margin:0">Assalam-o-Alaikum <span id="nm"></span></h2>
+<div style="color:var(--m)">Module chunen:</div><div class="grid" id="grid"></div></div>
+<iframe id="fr" hidden title="module"></iframe></main></div>
+
+<script src="config.js"></script>
+<script>
+// ====== MODULES: URL yahan badlen. role: "all" ya "admin" ======
+const MODULES=[
+ {id:'dik',  icon:'🎁',name:'Donation in Kind',desc:'Slips, records, reports',url:'dik/index.html',role:'all'},
+ {id:'store',icon:'📦',name:'Store / Inventory',desc:'Stock, incoming, issuance',url:'store/index.html',role:'all'},
+ {id:'adm',  icon:'🏥',name:'Admission System',desc:'Patients, forms, health',url:'admission/index.html',role:'all'}
+];
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.min.js"></script>
+<script>
+const C=window.DIK_CONFIG,$=s=>document.querySelector(s);
+const sb=window.supabase.createClient(C.SUPABASE_URL,C.SUPABASE_ANON_KEY);
+let me=null;
+function show(v){$('#home').hidden=v!=='home';$('#fr').hidden=v==='home';
+ document.querySelectorAll('.nav[data-id]').forEach(b=>b.classList.toggle('on',b.dataset.id===v))}
+function open_(m){
+ if(!m.url){alert(m.name+' abhi connect nahi hua.');return}
+ if(m.newTab){window.open(m.url,'_blank');return}
+ $('#fr').src=m.url;show(m.id)}
+function build(){
+ const ok=MODULES.filter(m=>m.role==='all'||me.role==='admin');
+ $('#nav').innerHTML='<button class="nav on" data-id="home">🏠 Home</button>'+ok.map(m=>`<button class="nav${m.url?'':' off'}" data-id="${m.id}">${m.icon} ${m.name}</button>`).join('');
+ $('#grid').innerHTML=ok.map(m=>`<button class="card" data-id="${m.id}"><div class="ic">${m.icon}</div><b>${m.name}${m.url?'':'<i class="tag">jald</i>'}</b><span>${m.desc}</span></button>`).join('');
+ document.querySelectorAll('[data-id]').forEach(b=>b.onclick=()=>{
+  if(b.dataset.id==='home'){show('home');return}
+  open_(MODULES.find(m=>m.id===b.dataset.id))})}
+async function enter(user){
+ const {data:p}=await sb.from('profiles').select('*').eq('id',user.id).maybeSingle();
+ if(!p||!p.active){await sb.auth.signOut();$('#msg').textContent='Account active nahi hai. Admin se rabta karen.';return}
+ me=p;$('#login').hidden=true;$('#app').hidden=false;
+ $('#nm').textContent=p.full_name;$('#who').textContent=p.full_name+' ('+p.role+')';build();show('home')}
+$('#lf').onsubmit=async e=>{e.preventDefault();$('#msg').textContent='';$('#lb').disabled=true;
+ const u=$('#u').value.trim(),em=u.includes('@')?u:u+(C.EMAIL_DOMAIN||'@neha.com');
+ const {data,error}=await sb.auth.signInWithPassword({email:em,password:$('#p').value});
+ $('#lb').disabled=false;
+ if(error){$('#msg').textContent='Username ya password ghalat hai.';return}
+ enter(data.user)};
+$('#out').onclick=async()=>{await sb.auth.signOut();location.reload()};
+(async()=>{const {data}=await sb.auth.getSession();if(data.session)enter(data.session.user)})();
+</script></body></html>
